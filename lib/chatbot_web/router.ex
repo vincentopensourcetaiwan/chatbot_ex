@@ -16,6 +16,8 @@ defmodule ChatbotWeb.Router do
 
   scope "/", ChatbotWeb do
     pipe_through :browser
+
+    live "/", ChatLive
   end
 
   # Other scopes may use custom stacks.
