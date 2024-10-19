@@ -19,7 +19,7 @@ defmodule Chatbot.Chat do
       Enum.map(messages, fn %{role: role, content: content} ->
         case role do
           :user -> LangChain.Message.new_user!(content)
-          :assistant -> LangChain.Message.new_system!(content)
+          :assistant -> LangChain.Message.new_assistant!(content)
         end
       end)
 
