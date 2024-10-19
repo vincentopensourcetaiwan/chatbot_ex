@@ -6,7 +6,8 @@ defmodule Chatbot.Chat do
   end
 
   @llm LangChain.ChatModels.ChatOpenAI.new!(%{
-         model: "gpt-4o-mini"
+         model: "gpt-4o-mini",
+         stream: true
        })
 
   @chain LangChain.Chains.LLMChain.new!(%{llm: @llm})
@@ -23,10 +24,41 @@ defmodule Chatbot.Chat do
         end
       end)
 
-    {:ok, _chain, response} =
-      LangChain.Chains.LLMChain.add_messages(@chain, messages) |> LangChain.Chains.LLMChain.run()
+    with {:ok, _chain, response} <-
+           LangChain.Chains.LLMChain.add_messages(@chain, messages)
+           |> LangChain.Chains.LLMChain.run() do
+      Message.changeset(%{role: :assistant, content: response.content}) |> Chatbot.Repo.insert()
+    else
+      _error -> {:error, "I failed, I'm sorry"}
+    end
+  end
 
-    Message.changeset(%{role: :assistant, content: response.content}) |> Chatbot.Repo.insert!()
+  def stream_assistant_message(messages, receiver) do
+    handler = %{
+      on_llm_new_delta: fn _model, %LangChain.MessageDelta{} = data ->
+        send(receiver, {:next_message_delta, data.content})
+      end,
+      on_message_processed: fn _chain, %LangChain.Message{} = data ->
+        Message.changeset(%{role: :assistant, content: data.content}) |> Chatbot.Repo.insert()
+        send(receiver, {:message_processed, data.content})
+      end
+    }
+
+    messages =
+      Enum.map(messages, fn %{role: role, content: content} ->
+        case role do
+          :user -> LangChain.Message.new_user!(content)
+          :assistant -> LangChain.Message.new_assistant!(content)
+        end
+      end)
+
+    Task.Supervisor.start_child(Chatbot.TaskSupervisor, fn ->
+      @chain
+      |> LangChain.Chains.LLMChain.add_callback(handler)
+      |> LangChain.Chains.LLMChain.add_llm_callback(handler)
+      |> LangChain.Chains.LLMChain.add_messages(messages)
+      |> LangChain.Chains.LLMChain.run()
+    end)
   end
 
   def all_messages() do

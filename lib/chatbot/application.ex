@@ -8,6 +8,7 @@ defmodule Chatbot.Application do
   @impl true
   def start(_type, _args) do
     children = [
+      {Task.Supervisor, name: Chatbot.TaskSupervisor},
       ChatbotWeb.Telemetry,
       Chatbot.Repo,
       {DNSCluster, query: Application.get_env(:chatbot, :dns_cluster_query) || :ignore},

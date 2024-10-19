@@ -8,7 +8,6 @@ defmodule ChatbotWeb.ChatLive do
     socket =
       socket
       |> assign(:messages, Chat.all_messages())
-      |> assign(:latest_assistant, nil)
       |> assign(:form, to_form(%{"message" => ""}))
 
     {:ok, socket}
@@ -17,17 +16,9 @@ defmodule ChatbotWeb.ChatLive do
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
-    <%= for m <- @messages do %>
-      <p>role: <%= m.role %> content: <%= m.content %></p>
+    <%= for message <- @messages do %>
+      <.chat_message role={message.role} content={message.content} />
     <% end %>
-
-    <.async_result :let={latest_assistant} :if={assigns[:latest_assistant]} assign={@latest_assistant}>
-      <:loading>...</:loading>
-      <:failed :let={_failure}>I did something stupid and failed.</:failed>
-      <%= if latest_assistant do %>
-        <p>role: <%= latest_assistant.role %> content: <%= latest_assistant.content %></p>
-      <% end %>
-    </.async_result>
 
     <.simple_form for={@form} phx-submit="send">
       <.input field={@form[:message]} label="Message" />
@@ -38,6 +29,12 @@ defmodule ChatbotWeb.ChatLive do
     """
   end
 
+  defp chat_message(assigns) do
+    ~H"""
+    <p><%= @role %>: <%= @content %></p>
+    """
+  end
+
   @impl Phoenix.LiveView
   def handle_event("send", %{"message" => message}, socket) do
     messages = socket.assigns.messages
@@ -45,17 +42,54 @@ defmodule ChatbotWeb.ChatLive do
 
     messages = messages ++ [user_message]
 
-    socket =
-      socket
-      |> assign(:messages, Chat.all_messages())
-      |> assign_async(
-        :latest_assistant,
-        fn ->
-          {:ok, %{latest_assistant: Chat.new_assistant_message(messages)}}
-        end,
-        reset: true
-      )
+    send(self(), {:stream_assistant_message, messages})
 
+    {:noreply, assign(socket, :messages, messages)}
+  end
+
+  @impl Phoenix.LiveView
+  def handle_info({:new_assistant_message, messages}, socket) do
+    {:ok, assistant_message} = Chat.new_assistant_message(messages)
+
+    messages = messages ++ [assistant_message]
+    {:noreply, assign(socket, :messages, messages)}
+  end
+
+  def handle_info({:stream_assistant_message, messages}, socket) do
+    Chat.stream_assistant_message(messages, self())
+
+    messages = messages ++ [%{role: :assistant, content: ""}]
+
+    {:noreply, assign(socket, messages: messages)}
+  end
+
+  def handle_info({:next_message_delta, nil}, socket) do
     {:noreply, socket}
+  end
+
+  def handle_info({:next_message_delta, message_delta}, socket) do
+    [latest_assistant_message | messages] = Enum.reverse(socket.assigns.messages)
+
+    latest_assistant_message = %{
+      latest_assistant_message
+      | content: latest_assistant_message.content <> message_delta
+    }
+
+    messages = [latest_assistant_message | messages] |> Enum.reverse()
+
+    {:noreply, assign(socket, :messages, messages)}
+  end
+
+  def handle_info({:message_processed, completed_message}, socket) do
+    [latest_assistant_message | messages] = Enum.reverse(socket.assigns.messages)
+
+    latest_assistant_message = %{
+      latest_assistant_message
+      | content: completed_message
+    }
+
+    messages = [latest_assistant_message | messages] |> Enum.reverse()
+
+    {:noreply, assign(socket, :messages, messages)}
   end
 end
