@@ -1,4 +1,25 @@
-body, html {
-    // TODO: delete me
-    background-color: orange;
-  }
+// Global settings
+@use '~bitstyles/scss/bitstyles/settings';
+
+// Design tokens (primary split into parts)
+@use '~bitstyles/scss/bitstyles/design-tokens/animation';
+@use '~bitstyles/scss/bitstyles/design-tokens/base-colors';
+@use '~bitstyles/scss/bitstyles/design-tokens/base-palette';
+@use '~bitstyles/scss/bitstyles/design-tokens/breakpoints';
+@use '~bitstyles/scss/bitstyles/design-tokens/color-palette';
+@use '~bitstyles/scss/bitstyles/design-tokens/layout' as layout;
+@use '~bitstyles/scss/bitstyles/design-tokens/shadows';
+@use '~bitstyles/scss/bitstyles/design-tokens/typography' with (
+  $webfont-family-name: 'Roboto',
+  $webfont-variants: (),
+);
+@use '~bitstyles/scss/bitstyles/design-tokens/secondary';
+
+// Components
+@use '~bitstyles/scss/bitstyles/generic';
+@use '~bitstyles/scss/bitstyles/base';
+@use '~bitstyles/scss/bitstyles/atoms';
+@use '~bitstyles/scss/bitstyles/organisms';
+
+// Utilities
+@use '~bitstyles/scss/bitstyles/utilities';

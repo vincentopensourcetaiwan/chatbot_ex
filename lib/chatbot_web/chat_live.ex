@@ -16,6 +16,8 @@ defmodule ChatbotWeb.ChatLive do
   @impl Phoenix.LiveView
   def render(assigns) do
     ~H"""
+    <h1 class="u-fg-brand-1">Chatbot</h1>
+
     <%= for message <- @messages do %>
       <.chat_message role={message.role} content={message.content} />
     <% end %>
