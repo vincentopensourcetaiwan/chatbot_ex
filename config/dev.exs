@@ -25,7 +25,7 @@ config :chatbot, ChatbotWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "HIOGpSCkjfoq95e9q5Rv3pjU3Bvte3d5FRrbeRLv+As8qsnp/RoVA8HdWiZqhqn/",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:chatbot, ~w(--sourcemap=inline --watch)]}
+    node: ["build.js", "--watch", cd: Path.expand("../assets", __DIR__)]
   ]
 
 # ## SSL Support
