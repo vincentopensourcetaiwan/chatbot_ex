@@ -1,4 +1,6 @@
 {
+  "name": "chatbot_ex",
+  "repository": "https://github.com/bitcrowd/chatbot_ex",
   "devDependencies": {
     "esbuild": "^0.24.0",
     "esbuild-sass-plugin": "^3.3.1"
