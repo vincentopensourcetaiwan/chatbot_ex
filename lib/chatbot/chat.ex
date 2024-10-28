@@ -1,4 +1,5 @@
 defmodule Chatbot.Chat do
+  import Ecto.Query, only: [from: 2]
   alias Chatbot.Chat.Message
 
   def create_user_message(%{role: :user} = attrs) do
@@ -62,6 +63,6 @@ defmodule Chatbot.Chat do
   end
 
   def all_messages() do
-    Chatbot.Repo.all(Message)
+    Chatbot.Repo.all(from(m in Message, order_by: m.inserted_at))
   end
 end
