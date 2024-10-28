@@ -1,7 +1,7 @@
 defmodule Chatbot.Chat do
   alias Chatbot.Chat.Message
 
-  def new_user_message(%{role: :user} = attrs) do
+  def create_user_message(%{role: :user} = attrs) do
     Message.changeset(attrs) |> Chatbot.Repo.insert!()
   end
 
@@ -15,7 +15,7 @@ defmodule Chatbot.Chat do
            LangChain.Message.new_system!("You give fun responses.")
          )
 
-  def new_assistant_message(messages) do
+  def create_assistant_message(messages) do
     messages =
       Enum.map(messages, fn %{role: role, content: content} ->
         case role do
