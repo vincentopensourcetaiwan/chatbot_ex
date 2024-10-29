@@ -42,7 +42,9 @@ defmodule ChatbotWeb.ChatLive do
 
     messages = messages ++ [user_message]
 
-    send(self(), {:stream_assistant_message, messages})
+    Chat.stream_assistant_message(messages, self())
+
+    messages = messages ++ [%{role: :assistant, content: ""}]
 
     {:noreply, assign(socket, :messages, messages)}
   end
@@ -53,14 +55,6 @@ defmodule ChatbotWeb.ChatLive do
 
     messages = messages ++ [assistant_message]
     {:noreply, assign(socket, :messages, messages)}
-  end
-
-  def handle_info({:stream_assistant_message, messages}, socket) do
-    Chat.stream_assistant_message(messages, self())
-
-    messages = messages ++ [%{role: :assistant, content: ""}]
-
-    {:noreply, assign(socket, messages: messages)}
   end
 
   def handle_info({:next_message_delta, nil}, socket) do
