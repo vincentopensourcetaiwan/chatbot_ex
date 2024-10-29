@@ -43,7 +43,6 @@ defmodule Chatbot.MixProject do
       {:phoenix_live_view, "~> 1.0.0-rc.1", override: true},
       {:floki, ">= 0.30.0", only: :test},
       {:phoenix_live_dashboard, "~> 0.8.3"},
-      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
@@ -65,10 +64,10 @@ defmodule Chatbot.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
-      "assets.setup": ["esbuild.install --if-missing"],
-      "assets.build": ["esbuild chatbot"],
+      "assets.setup": ["cmd --cd assets npm install"],
+      "assets.build": ["cmd --cd assets node build.js"],
       "assets.deploy": [
-        "esbuild chatbot --minify",
+        "cmd --cd assets node build.js --deploy",
         "phx.digest"
       ]
     ]
