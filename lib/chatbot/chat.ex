@@ -1,6 +1,6 @@
 defmodule Chatbot.Chat do
   import Ecto.Query, only: [from: 2]
-  alias Chatbot.Chat.Message
+  alias Chatbot.{Chat.Message, LLMMock}
 
   def create_user_message(%{role: :user} = attrs) do
     Message.changeset(attrs) |> Chatbot.Repo.insert!()
@@ -17,6 +17,8 @@ defmodule Chatbot.Chat do
          )
 
   def create_assistant_message(messages) do
+    maybe_mock_llm()
+
     messages =
       Enum.map(messages, fn %{role: role, content: content} ->
         case role do
@@ -54,12 +56,18 @@ defmodule Chatbot.Chat do
       end)
 
     Task.Supervisor.start_child(Chatbot.TaskSupervisor, fn ->
+      maybe_mock_llm(stream: true)
+
       @chain
       |> LangChain.Chains.LLMChain.add_callback(handler)
       |> LangChain.Chains.LLMChain.add_llm_callback(handler)
       |> LangChain.Chains.LLMChain.add_messages(messages)
       |> LangChain.Chains.LLMChain.run()
     end)
+  end
+
+  defp maybe_mock_llm(opts \\ []) do
+    if Application.fetch_env!(:chatbot, :mock_llm_api), do: LLMMock.mock(opts)
   end
 
   def all_messages() do
