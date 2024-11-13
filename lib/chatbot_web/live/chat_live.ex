@@ -8,7 +8,7 @@ defmodule ChatbotWeb.ChatLive do
     socket =
       socket
       |> assign(:messages, Chat.all_messages())
-      |> assign(:form, to_form(%{"message" => ""}))
+      |> assign(:form, build_form(0))
 
     {:ok, socket}
   end
@@ -31,14 +31,14 @@ defmodule ChatbotWeb.ChatLive do
         <.ui_input
           type="textarea"
           form={@form}
-          field={:message}
+          field={:content}
           label="Message"
           hidden_label={true}
           maxlength="5000"
           placeholder="Ask a question"
         />
         <:actions>
-          <.ui_button>Send</.ui_button>
+          <.ui_button type="submit">Send</.ui_button>
         </:actions>
       </.simple_form>
     </main>
@@ -57,9 +57,9 @@ defmodule ChatbotWeb.ChatLive do
   end
 
   @impl Phoenix.LiveView
-  def handle_event("send", %{"message" => message}, socket) do
+  def handle_event("send", %{"message" => %{"content" => content}}, socket) do
     messages = socket.assigns.messages
-    {:ok, user_message} = Chat.create_message(%{role: :user, content: message})
+    {:ok, user_message} = Chat.create_message(%{role: :user, content: content})
 
     messages = messages ++ [user_message]
 
@@ -67,7 +67,10 @@ defmodule ChatbotWeb.ChatLive do
 
     messages = messages ++ [%{role: :assistant, content: ""}]
 
-    {:noreply, assign(socket, :messages, messages)}
+    {:noreply,
+     socket
+     |> assign(:messages, messages)
+     |> assign(:form, build_form(Enum.count(messages)))}
   end
 
   @impl Phoenix.LiveView
@@ -106,5 +109,14 @@ defmodule ChatbotWeb.ChatLive do
     messages = [latest_assistant_message | messages] |> Enum.reverse()
 
     {:noreply, assign(socket, :messages, messages)}
+  end
+
+  defp build_form(id) do
+    %{role: :user, content: ""}
+    |> Chat.Message.changeset()
+    # we need to give the form an ID, so that
+    # PhoenixLiveView knows that this is a new form
+    # for a new message and clears the input
+    |> to_form(id: "message-#{id}")
   end
 end
