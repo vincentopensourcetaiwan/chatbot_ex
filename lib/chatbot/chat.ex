@@ -9,7 +9,7 @@ defmodule Chatbot.Chat do
   # `add_callback/2` expects a map with all possible handler functions.
   # See:
   # https://hexdocs.pm/langchain/0.3.0-rc.0/LangChain.Chains.ChainCallbacks.html#t:chain_callback_handler/0
-  @dialyzer {:nowarn_function, stream_assistant_message: 2}
+  @dialyzer {:nowarn_function, stream_assistant_message: 1}
 
   @doc """
   Creates a message.
@@ -38,13 +38,7 @@ defmodule Chatbot.Chat do
   def request_assistant_message(messages) do
     maybe_mock_llm()
 
-    messages =
-      Enum.map(messages, fn %{role: role, content: content} ->
-        case role do
-          :user -> LangChain.Message.new_user!(content)
-          :assistant -> LangChain.Message.new_assistant!(content)
-        end
-      end)
+    messages = Enum.map(messages, &to_langchain_message/1)
 
     @chain
     |> LLMChain.add_messages(messages)
@@ -64,25 +58,25 @@ defmodule Chatbot.Chat do
 
   Once the full message was processed, it is saved as an assistant message.
   """
-  @spec stream_assistant_message([Message.t()], pid()) :: :ok
-  def stream_assistant_message(messages, receiver) do
+  @spec stream_assistant_message(pid()) :: Message.t()
+  def stream_assistant_message(receiver) do
+    messages = all_messages() |> Enum.map(&to_langchain_message/1)
+
+    {:ok, assistant_message} = create_message(%{role: :assistant, content: ""})
+
     handler = %{
       on_llm_new_delta: fn _model, %LangChain.MessageDelta{} = data ->
-        send(receiver, {:next_message_delta, data.content})
+        send(receiver, {:next_message_delta, assistant_message.id, data})
       end,
       on_message_processed: fn _chain, %LangChain.Message{} = data ->
-        create_message(%{role: :assistant, content: data.content})
-        send(receiver, {:message_processed, data.content})
+        {:ok, completed_message} =
+          assistant_message
+          |> Message.changeset(%{content: data.content})
+          |> Chatbot.Repo.update()
+
+        send(receiver, {:message_processed, completed_message})
       end
     }
-
-    messages =
-      Enum.map(messages, fn %{role: role, content: content} ->
-        case role do
-          :user -> LangChain.Message.new_user!(content)
-          :assistant -> LangChain.Message.new_assistant!(content)
-        end
-      end)
 
     Task.Supervisor.start_child(Chatbot.TaskSupervisor, fn ->
       maybe_mock_llm(stream: true)
@@ -94,8 +88,14 @@ defmodule Chatbot.Chat do
       |> LLMChain.run()
     end)
 
-    :ok
+    assistant_message
   end
+
+  defp to_langchain_message(%{role: :user, content: content}),
+    do: LangChain.Message.new_user!(content)
+
+  defp to_langchain_message(%{role: :assistant, content: content}),
+    do: LangChain.Message.new_assistant!(content)
 
   defp maybe_mock_llm(opts \\ []) do
     if Application.fetch_env!(:chatbot, :mock_llm_api), do: LLMMock.mock(opts)
