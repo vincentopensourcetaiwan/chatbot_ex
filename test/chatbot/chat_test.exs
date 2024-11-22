@@ -22,6 +22,23 @@ defmodule Chatbot.ChatTest do
     end
   end
 
+  describe "update_message!/2" do
+    test "updates a message when given valid params" do
+      message = insert(:message)
+
+      assert %{content: "New content"} =
+               Chat.update_message!(message, %{content: "New content"})
+    end
+
+    test "raises when given invalid params" do
+      message = insert(:message)
+
+      assert_raise Ecto.InvalidChangesetError, fn ->
+        Chat.update_message!(message, %{role: "invalid"})
+      end
+    end
+  end
+
   describe "all_messages/0" do
     test "returns all messages sorted by inserted_at" do
       now = DateTime.utc_now()
@@ -29,6 +46,17 @@ defmodule Chatbot.ChatTest do
       older_message = insert(:message, inserted_at: DateTime.add(now, -1, :day))
 
       assert Chat.all_messages() == [older_message, latest_message]
+    end
+  end
+
+  describe "delete_all_messages/0" do
+    test "deletes all messages" do
+      insert(:message, role: :user)
+      insert(:message, role: :assistant)
+
+      assert Chat.delete_all_messages() == :ok
+
+      assert Repo.all(Chat.Message) == []
     end
   end
 end
