@@ -3,7 +3,7 @@ defmodule Chatbot.Chat do
   Context for chat related functions.
   """
   import Ecto.Query, only: [from: 2]
-  alias Chatbot.{Chat.Message, LLMMock, Repo}
+  alias Chatbot.{Chat.Message, Repo}
   alias LangChain.Chains.LLMChain
   # There is currently a bug in the LangChain type specs:
   # `add_callback/2` expects a map with all possible handler functions.
