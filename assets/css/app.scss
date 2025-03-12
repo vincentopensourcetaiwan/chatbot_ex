@@ -98,3 +98,15 @@
       transform: rotate(360deg);
   }
 } 
+
+.a-card ol {
+  padding-inline-start: var(--bs-size-l2);
+}
+
+.a-card ul {
+  padding-inline-start: var(--bs-size-l2);
+}
+
+.a-card code {
+  text-wrap: wrap;
+}

@@ -86,7 +86,7 @@ defmodule ChatbotWeb.ChatLive do
     <.ui_card id={@id} class={@class}>
       <%= @markdown %>
 
-      <details :if={@sources}>
+      <details :if={@sources} class="u-padding-l1-top">
         <summary>Sources</summary>
         <ol>
           <li :for={source <- @sources}>
