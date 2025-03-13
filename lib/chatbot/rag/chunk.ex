@@ -1,4 +1,6 @@
 defmodule Chatbot.Rag.Chunk do
+  @moduledoc false
+
   use Ecto.Schema
 
   schema "chunks" do

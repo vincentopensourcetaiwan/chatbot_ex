@@ -1,4 +1,5 @@
 defmodule Chatbot.Rag.TelemetryHandler do
+  @moduledoc false
   alias Phoenix.PubSub
 
   def handle_event(prefix, _measurement, _metadata, _config) do

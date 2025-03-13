@@ -1,4 +1,5 @@
 defmodule Chatbot.Rag do
+  @moduledoc false
   alias Chatbot.Repo
   alias Rag.{Ai, Embedding, Generation, Retrieval}
 
@@ -7,7 +8,7 @@ defmodule Chatbot.Rag do
 
   @provider Ai.Nx.new(%{embeddings_serving: Rag.EmbeddingServing})
 
-  def ingest_ecto() do
+  def ingest_ecto do
     docs_url = "https://repo.hex.pm/docs/ecto-3.12.5.tar.gz"
 
     code_url = "https://repo.hex.pm/tarballs/ecto-3.12.5.tar"

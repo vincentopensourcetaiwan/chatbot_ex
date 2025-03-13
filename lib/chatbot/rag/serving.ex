@@ -1,5 +1,6 @@
 defmodule Chatbot.Rag.Serving do
-  def build_embedding_serving() do
+  @moduledoc false
+  def build_embedding_serving do
     repo = {:hf, "jinaai/jina-embeddings-v2-base-code"}
 
     {:ok, model_info} =
@@ -18,7 +19,7 @@ defmodule Chatbot.Rag.Serving do
     )
   end
 
-  def build_llm_serving() do
+  def build_llm_serving do
     repo = {:hf, "HuggingFaceTB/SmolLM2-135M-Instruct"}
 
     {:ok, model_info} = Bumblebee.load_model(repo)
