@@ -76,10 +76,11 @@ defmodule Chatbot.Chat do
       end
     }
 
-    {:ok, _chain } = @chain
-    |> LLMChain.add_callback(handler)
-    |> LLMChain.add_messages(messages)
-    |> LLMChain.run()
+    {:ok, _chain} =
+      @chain
+      |> LLMChain.add_callback(handler)
+      |> LLMChain.add_messages(messages)
+      |> LLMChain.run()
 
     assistant_message
   end
