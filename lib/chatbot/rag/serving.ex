@@ -1,5 +1,8 @@
 defmodule Chatbot.Rag.Serving do
   @moduledoc false
+
+  alias Bumblebee.Text
+
   def build_embedding_serving do
     repo = {:hf, "jinaai/jina-embeddings-v2-base-code"}
 
@@ -11,7 +14,7 @@ defmodule Chatbot.Rag.Serving do
 
     {:ok, tokenizer} = Bumblebee.load_tokenizer(repo)
 
-    Bumblebee.Text.TextEmbedding.text_embedding(model_info, tokenizer,
+    Text.TextEmbedding.text_embedding(model_info, tokenizer,
       compile: [batch_size: 64, sequence_length: 512],
       defn_options: [compiler: EXLA],
       output_attribute: :hidden_state,

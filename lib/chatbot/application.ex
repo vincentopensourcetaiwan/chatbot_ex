@@ -5,12 +5,15 @@ defmodule Chatbot.Application do
 
   use Application
 
+  alias Chatbot.Rag.Serving
+  alias Chatbot.Rag.TelemetryHandler
+
   @impl true
   def start(_type, _args) do
     children = [
       {Nx.Serving,
        [
-         serving: Chatbot.Rag.Serving.build_embedding_serving(),
+         serving: Serving.build_embedding_serving(),
          name: Rag.EmbeddingServing,
          batch_timeout: 100
        ]},
@@ -29,7 +32,7 @@ defmodule Chatbot.Application do
       :telemetry.attach_many(
         "rag-handler",
         Rag.Telemetry.events(),
-        &Chatbot.Rag.TelemetryHandler.handle_event/4,
+        &TelemetryHandler.handle_event/4,
         nil
       )
 
